@@ -1,0 +1,42 @@
+name: Fabric deploy (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: [self-hosted, fabric]
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: fabric-deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      FABRIC_WORKSPACE_ID: ${{ vars.FABRIC_WORKSPACE_ID }}
+      ORACLE_CONNECTION_ID: ${{ vars.ORACLE_CONNECTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      PYTHON_BIN: ${{ vars.PYTHON_BIN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Isolated venv in RUNNER_TEMP so nothing leaks between runs on a shared self-hosted runner.
+      - name: Install fabric-cicd
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${PYTHON_BIN:-python3}" -m venv "$RUNNER_TEMP/fabric-venv"
+          VENV_PY="$RUNNER_TEMP/fabric-venv/bin/python"
+          [ -x "$VENV_PY" ] || VENV_PY="$RUNNER_TEMP/fabric-venv/Scripts/python.exe"
+          "$VENV_PY" -m pip install --disable-pip-version-check -q -r deploy/requirements.txt
+          echo "VENV_PY=$VENV_PY" >> "$GITHUB_ENV"
+
+      - name: Deploy Lakehouse, Warehouse and Pipelines
+        shell: bash
+        run: '"$VENV_PY" deploy/deploy.py'

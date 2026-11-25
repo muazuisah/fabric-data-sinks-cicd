@@ -1,0 +1,36 @@
+# fabric-cicd parameterization: swaps DEV values committed in git for target-environment values.
+# Environments (TEST/PROD) must match the ENVIRONMENT passed to deploy/deploy.py.
+# Replace the aaaaaaaa-... placeholders below with the real IDs from your DEV workspace
+# (they appear in pipeline-content.json after Fabric Git sync).
+
+find_replace:
+  # On-prem Oracle connection (via on-premises data gateway). Connections are not
+  # source controlled; the per-environment connection ID comes from a GitHub variable.
+  - find_value: "aaaaaaaa-0000-0000-0000-000000000004"
+    replace_value:
+      _ALL_: "$ENV:ORACLE_CONNECTION_ID"
+    item_type: "DataPipeline"
+
+  # DEV workspace ID -> target workspace ID
+  - find_value: "aaaaaaaa-0000-0000-0000-000000000001"
+    replace_value:
+      _ALL_: "$workspace.$id"
+    item_type: "DataPipeline"
+
+  # DEV lh_bronze ID -> target lh_bronze ID
+  - find_value: "aaaaaaaa-0000-0000-0000-000000000002"
+    replace_value:
+      _ALL_: "$items.Lakehouse.lh_bronze.$id"
+    item_type: "DataPipeline"
+
+  # DEV wh_gold ID -> target wh_gold ID
+  - find_value: "aaaaaaaa-0000-0000-0000-000000000003"
+    replace_value:
+      _ALL_: "$items.Warehouse.wh_gold.$id"
+    item_type: "DataPipeline"
+
+  # DEV wh_gold SQL endpoint -> target wh_gold SQL endpoint
+  - find_value: "dev-placeholder.datawarehouse.fabric.microsoft.com"
+    replace_value:
+      _ALL_: "$items.Warehouse.wh_gold.$sqlendpoint"
+    item_type: "DataPipeline"

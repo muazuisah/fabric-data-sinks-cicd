@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "pl_oracle_to_lakehouse",
+    "description": "Copy on-prem Oracle table to lh_bronze via on-premises data gateway"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "6a1f2c3d-0b4e-4c55-9d1a-1b2c3d4e5f03"
+  }
+}

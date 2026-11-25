@@ -1,0 +1,40 @@
+name: Fabric CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workspace/**"
+      - "deploy/**"
+      - ".github/workflows/fabric-*.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [TEST, PROD]
+        default: TEST
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-test:
+    if: github.event_name == 'push' || inputs.environment == 'TEST'
+    uses: ./.github/workflows/fabric-deploy-env.yml
+    with:
+      environment: TEST
+    secrets: inherit
+
+  # On push, PROD runs after TEST succeeds (gate it with required reviewers on the PROD environment).
+  # On manual run with PROD selected, TEST is skipped and PROD deploys directly.
+  deploy-prod:
+    needs: deploy-test
+    if: >-
+      always() &&
+      ((github.event_name == 'push' && needs.deploy-test.result == 'success') ||
+       (github.event_name == 'workflow_dispatch' && inputs.environment == 'PROD'))
+    uses: ./.github/workflows/fabric-deploy-env.yml
+    with:
+      environment: PROD
+    secrets: inherit

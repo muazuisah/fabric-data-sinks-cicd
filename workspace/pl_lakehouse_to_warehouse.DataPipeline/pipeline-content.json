@@ -1,0 +1,80 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "name": "Copy Lakehouse to Warehouse",
+        "type": "Copy",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.02:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "source": {
+            "type": "LakehouseTableSource",
+            "datasetSettings": {
+              "annotations": [],
+              "linkedService": {
+                "name": "lh_bronze",
+                "properties": {
+                  "annotations": [],
+                  "type": "Lakehouse",
+                  "typeProperties": {
+                    "workspaceId": "aaaaaaaa-0000-0000-0000-000000000001",
+                    "artifactId": "aaaaaaaa-0000-0000-0000-000000000002",
+                    "rootFolder": "Tables"
+                  }
+                }
+              },
+              "type": "LakehouseTable",
+              "schema": [],
+              "typeProperties": { "table": "customers" }
+            }
+          },
+          "sink": {
+            "type": "DataWarehouseSink",
+            "allowCopyCommand": true,
+            "tableOption": "autoCreate",
+            "preCopyScript": "IF OBJECT_ID('dbo.dim_customer') IS NOT NULL TRUNCATE TABLE dbo.dim_customer",
+            "datasetSettings": {
+              "annotations": [],
+              "linkedService": {
+                "name": "wh_gold",
+                "properties": {
+                  "annotations": [],
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "workspaceId": "aaaaaaaa-0000-0000-0000-000000000001",
+                    "artifactId": "aaaaaaaa-0000-0000-0000-000000000003",
+                    "endpoint": "dev-placeholder.datawarehouse.fabric.microsoft.com"
+                  }
+                }
+              },
+              "type": "DataWarehouseTable",
+              "schema": [],
+              "typeProperties": { "schema": "dbo", "table": "dim_customer" }
+            }
+          },
+          "translator": {
+            "type": "TabularTranslator",
+            "mappings": [
+              { "source": { "name": "CUSTOMER_ID" }, "sink": { "name": "customer_id", "type": "Int64" } },
+              { "source": { "name": "CUSTOMER_NAME" }, "sink": { "name": "customer_name", "type": "String" } },
+              { "source": { "name": "EMAIL" }, "sink": { "name": "email", "type": "String" } },
+              { "source": { "name": "CREATED_DATE" }, "sink": { "name": "created_date", "type": "DateTime" } }
+            ],
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          },
+          "enableStaging": false
+        }
+      }
+    ]
+  }
+}
